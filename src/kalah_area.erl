@@ -92,9 +92,26 @@ opponent_cell(N) when N>0, N<14 -> 14 - N.
 % Оценить позицию (чем меньше, тем лучше)
 -spec estimate(State :: kalah_state ) -> integer().
 estimate(State) ->
-	-get(State, 7) + get(State, 14).
+	case isGameOver(State) of
+		true -> -lists:sum(tuple_to_list(State#kalah_state.my)) + lists:sum(tuple_to_list(State#kalah_state.opponent));
+		false ->
+			-get(State, 7) + get(State, 14)
+	end
+.
 
 
+% Проверить не закончилась ли игра
+-spec isGameOver(State :: kalah_state) -> boolean().
+isGameOver(State) ->
+	case State#kalah_state.my of
+		{ 0,0,0,0,0,0, _ } -> true;
+		_ ->
+			case State#kalah_state.my of
+				{ 0,0,0,0,0,0, _ } -> true;
+				_ -> false
+			end
+	end
+.
 
 %% ---------------------------------------------------------------------------------------------------------------------
 
@@ -126,10 +143,13 @@ set_test() ->
 
 estimate_test() ->
 	State = new(6),
+	GameOverState = set(new(0),7,10),
 	[
 		?_assertEqual(estimate(State),0),
 		?_assertEqual(estimate(set(State,1,8)),0),
-		?_assertEqual(estimate(set(State,7,10)),10)
+		?_assertEqual(estimate(set(State,7,10)),10),
+		?_assertEqual(estimate(GameOverState),-10),
+		?_assertEqual(estimate(set(GameOverState,14, 10)),0)
 	].
 
 step_test() ->
