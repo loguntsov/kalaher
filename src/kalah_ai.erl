@@ -13,6 +13,26 @@ step(State) ->
 	{ Pos , _Est } = process(State, 6),
 	kalah_area:step(State, Pos).
 
+% Ходит компьютер пока это возможно
+
+step(State) ->
+	{ Steps, NewState } = step(State,[]);
+	{ lists:revers(Steps), NewState }.
+
+step(State, Steps) ->
+	if
+		kalah_area:is_game_over(State) -> { [ game_is_over | Steps], State };
+		_ ->
+			Player = State#kalah_state.owner,
+			{ Pos , _Est } = process(State, 6),
+			NewState = kalah_area:step(State, Pos),
+			if
+				Player == NewState#kalah_state.owner -> step(NewState, [kalah_area:opponent_cell(Pos) | Steps]);
+				true -> { Steps, NewState }
+			end
+	end
+.
+
 %% Вычислить следующий выгодный ход
 -spec process(State :: kalah_state, Level :: non_neg_integer()) -> { my_cell(), integer() } | {ok, integer() }.
 process(State, 0) ->
@@ -24,16 +44,17 @@ process(State, 0) ->
 ;
 
 process(State, Level) ->
-			Seq = lists:seq(1,6),
-			optimal(lists:map(
-				fun(X) ->
-					NewState = kalah_area:step(State, X),
-					case {NewState, is_record(NewState, kalah_state)} of
-						{{ error , Reason }, _ } -> { error , Reason };
-						{ _, true } -> { _Pos, Est } = process(NewState, Level - 1),
-							{ X , Est }
-					end
-				end,Seq))
+	Seq = lists:seq(1,6),
+	optimal(lists:map(
+		fun(X) ->
+			NewState = kalah_area:step(State, X),
+			case {NewState, is_record(NewState, kalah_state)} of
+				{{ error , Reason }, _ } -> { error , Reason };
+				{ _, true } -> { _Pos, Est } = process(NewState, Level - 1),
+					{ X , Est }
+			end
+		end
+	,Seq))
 .
 
 

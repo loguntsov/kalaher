@@ -1,5 +1,5 @@
 -module(kalah_area).
--export([new/0, step/2, estimate/1]).
+-export([new/0, step/2, estimate/1, is_game_over/1, opponent_cell/1]).
 
 -include("kalah_area.hrl").
 -include_lib("eunit/include/eunit.hrl").
@@ -92,7 +92,7 @@ opponent_cell(N) when N>0, N<14 -> 14 - N.
 % Оценить позицию (чем меньше, тем лучше)
 -spec estimate(State :: kalah_state ) -> integer().
 estimate(State) ->
-	case isGameOver(State) of
+	case is_game_over(State) of
 		true -> -lists:sum(tuple_to_list(State#kalah_state.my)) + lists:sum(tuple_to_list(State#kalah_state.opponent));
 		false ->
 			-get(State, 7) + get(State, 14)
@@ -102,14 +102,10 @@ estimate(State) ->
 
 % Проверить не закончилась ли игра
 -spec isGameOver(State :: kalah_state) -> boolean().
-isGameOver(State) ->
+is_game_over(State) ->
 	case State#kalah_state.my of
 		{ 0,0,0,0,0,0, _ } -> true;
-		_ ->
-			case State#kalah_state.my of
-				{ 0,0,0,0,0,0, _ } -> true;
-				_ -> false
-			end
+		_ -> false
 	end
 .
 
